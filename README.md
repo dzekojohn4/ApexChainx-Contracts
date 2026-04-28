@@ -173,6 +173,45 @@ Optional local outputs include:
 - debug build artifacts under `apexchainx_calculator/target/debug`
 - test binaries under `apexchainx_calculator/target/debug/deps`
 
+## Release Artifact Hash Manifest (SC-003)
+
+Every CI run and release tag produces a `manifest.sha256` file alongside the
+WASM artifact. The manifest contains the SHA-256 hash of `apexchainx_calculator.wasm`
+in standard `sha256sum` format:
+
+```
+<sha256hex>  apexchainx_calculator.wasm
+```
+
+### Verify a local build matches the recorded manifest
+
+```bash
+# 1. Build the release WASM locally
+cd apexchainx_calculator
+cargo build --release --target wasm32-unknown-unknown
+
+# 2. Download manifest.sha256 from the corresponding CI run or GitHub Release
+
+# 3. Copy the WASM next to the manifest and verify
+cp target/wasm32-unknown-unknown/release/apexchainx_calculator.wasm .
+sha256sum -c manifest.sha256
+# Expected output: apexchainx_calculator.wasm: OK
+```
+
+### Generate a manifest locally
+
+```bash
+cd apexchainx_calculator
+cargo build --release --target wasm32-unknown-unknown
+sha256sum target/wasm32-unknown-unknown/release/apexchainx_calculator.wasm \
+  | awk '{print $1 "  apexchainx_calculator.wasm"}' > manifest.sha256
+cat manifest.sha256
+```
+
+The `release-hash` workflow (`.github/workflows/release-hash.yml`) runs
+automatically on every push to `main`, every PR, and every `v*` tag. On tag
+pushes the manifest and WASM are attached to the GitHub Release.
+
 ## Verification Notes
 
 As of the latest stabilization pass:

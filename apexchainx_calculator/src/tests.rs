@@ -2876,12 +2876,8 @@ fn test_monotonicity_worse_mttr_never_improves_reward() {
     let mut prev_amount: Option<i128> = None;
     for mttr in 1u32..=15 {
         let oid = Symbol::new(&_env, &alloc::format!("MON_{}", mttr));
-        let result = client.calculate_sla(
-            &actors.operator,
-            &oid,
-            &symbol_short!("critical"),
-            &mttr,
-        );
+        let result =
+            client.calculate_sla(&actors.operator, &oid, &symbol_short!("critical"), &mttr);
         assert_eq!(result.status, symbol_short!("met"));
         if let Some(prev) = prev_amount {
             assert!(
@@ -2906,12 +2902,8 @@ fn test_monotonicity_worse_mttr_increases_penalty() {
     let mut prev_amount: Option<i128> = None;
     for mttr in 16u32..=30 {
         let oid = Symbol::new(&_env, &alloc::format!("MON_PEN_{}", mttr));
-        let result = client.calculate_sla(
-            &actors.operator,
-            &oid,
-            &symbol_short!("critical"),
-            &mttr,
-        );
+        let result =
+            client.calculate_sla(&actors.operator, &oid, &symbol_short!("critical"), &mttr);
         assert_eq!(result.status, symbol_short!("viol"));
         assert!(result.amount < 0, "Penalty must be negative");
         if let Some(prev) = prev_amount {
@@ -3053,12 +3045,8 @@ fn test_monotonicity_view_matches_mutating_for_all_mttr_values() {
         let view =
             client.calculate_sla_view(&symbol_short!("VM"), &symbol_short!("critical"), &mttr);
         let oid = Symbol::new(&_env, &alloc::format!("VM_{}", mttr));
-        let mutating = client.calculate_sla(
-            &actors.operator,
-            &oid,
-            &symbol_short!("critical"),
-            &mttr,
-        );
+        let mutating =
+            client.calculate_sla(&actors.operator, &oid, &symbol_short!("critical"), &mttr);
         assert_eq!(
             view.status, mutating.status,
             "status mismatch at mttr={}",
@@ -3313,7 +3301,9 @@ fn test_get_latest_by_outage_returns_last_of_many() {
         &20,
     );
 
-    let latest = client.get_latest_by_outage(&symbol(&env, "MULTI_3")).unwrap();
+    let latest = client
+        .get_latest_by_outage(&symbol(&env, "MULTI_3"))
+        .unwrap();
     assert_eq!(latest.status, symbol_short!("viol")); // mttr=20 > threshold=15
     assert_eq!(latest.mttr_minutes, 20);
 }
@@ -3431,8 +3421,14 @@ fn test_missed_event_recovery_via_get_history_page() {
     // Consumer already processed page 0 (entries 0-2); recover page 1 (entries 3-4)
     let missed = client.get_history_page(&3, &10);
     assert_eq!(missed.len(), 2);
-    assert_eq!(missed.get(0).unwrap().outage_id, Symbol::new(&env, "ENTRY_3"));
-    assert_eq!(missed.get(1).unwrap().outage_id, Symbol::new(&env, "ENTRY_4"));
+    assert_eq!(
+        missed.get(0).unwrap().outage_id,
+        Symbol::new(&env, "ENTRY_3")
+    );
+    assert_eq!(
+        missed.get(1).unwrap().outage_id,
+        Symbol::new(&env, "ENTRY_4")
+    );
 }
 
 #[test]
@@ -3595,7 +3591,10 @@ fn test_event_replay_after_prune_history_page_reflects_pruned_state() {
     assert_eq!(history.len(), 5);
     // All remaining entries are the last 5
     for i in 0..5u32 {
-        assert_eq!(history.get(i).unwrap().outage_id, Symbol::new(&env, &alloc::format!("EVT_{}", i + 5)));
+        assert_eq!(
+            history.get(i).unwrap().outage_id,
+            Symbol::new(&env, &alloc::format!("EVT_{}", i + 5))
+        );
     }
 }
 
@@ -4116,7 +4115,7 @@ fn test_storage_growth_prune_cycle_keeps_history_bounded() {
     let op = soroban_sdk::Address::generate(&env);
     client.initialize(&admin, &op);
 
-	let mut call_count = 0u32;
+    let mut call_count = 0u32;
     for _cycle in 0..3u32 {
         for _ in 0..20u32 {
             let oid = Symbol::new(&env, &alloc::format!("CYC_{}", call_count));
@@ -4355,13 +4354,7 @@ fn test_invariance_critical_all_rating_zones() {
     let sev = symbol_short!("critical");
     for mttr in [1u32, 7, 10, 12, 15, 16, 20, 30] {
         let oid = Symbol::new(&_env, &alloc::format!("INV_{}", mttr));
-        assert_invariant(
-            &client,
-            &actors.operator,
-            oid,
-            sev.clone(),
-            mttr,
-        );
+        assert_invariant(&client, &actors.operator, oid, sev.clone(), mttr);
     }
 }
 
@@ -4372,13 +4365,7 @@ fn test_invariance_high_all_rating_zones() {
     // high threshold=30
     for mttr in [1u32, 14, 22, 28, 30, 31, 40, 60] {
         let oid = Symbol::new(&_env, &alloc::format!("INV_{}", mttr));
-        assert_invariant(
-            &client,
-            &actors.operator,
-            oid,
-            sev.clone(),
-            mttr,
-        );
+        assert_invariant(&client, &actors.operator, oid, sev.clone(), mttr);
     }
 }
 
@@ -4389,13 +4376,7 @@ fn test_invariance_medium_all_rating_zones() {
     // medium threshold=60
     for mttr in [1u32, 29, 44, 55, 60, 61, 80, 120] {
         let oid = Symbol::new(&_env, &alloc::format!("INV_{}", mttr));
-        assert_invariant(
-            &client,
-            &actors.operator,
-            oid,
-            sev.clone(),
-            mttr,
-        );
+        assert_invariant(&client, &actors.operator, oid, sev.clone(), mttr);
     }
 }
 
@@ -4406,13 +4387,7 @@ fn test_invariance_low_all_rating_zones() {
     // low threshold=120
     for mttr in [1u32, 59, 89, 110, 120, 121, 150, 240] {
         let oid = Symbol::new(&_env, &alloc::format!("INV_{}", mttr));
-        assert_invariant(
-            &client,
-            &actors.operator,
-            oid,
-            sev.clone(),
-            mttr,
-        );
+        assert_invariant(&client, &actors.operator, oid, sev.clone(), mttr);
     }
 }
 
@@ -4509,7 +4484,10 @@ fn test_invariance_boundary_mttr_zero() {
         symbol_short!("high"),
         symbol_short!("medium"),
         symbol_short!("low"),
-    ].iter().enumerate() {
+    ]
+    .iter()
+    .enumerate()
+    {
         let oid = Symbol::new(&_env, &alloc::format!("Z_{}", idx));
         let view = client.calculate_sla_view(&oid, &sev, &0);
         let mutating = client.calculate_sla(&actors.operator, &oid, &sev, &0);
